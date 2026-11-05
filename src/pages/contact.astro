@@ -1,0 +1,117 @@
+---
+import { actions, isInputError } from "astro:actions";
+import Layout from "../layouts/Layout.astro";
+import { CONTACT_EMAIL } from "../consts";
+
+// The only on-demand route: form actions need the page rendered per request.
+export const prerender = false;
+
+const result = Astro.getActionResult(actions.contact);
+// Redirect after a successful POST so a refresh doesn't resend the message.
+if (result && !result.error) return Astro.redirect("/contact?sent=1", 303);
+
+const sent = Astro.url.searchParams.has("sent");
+const fieldErrors = isInputError(result?.error) ? result.error.fields : {};
+const sendFailed = result?.error && !isInputError(result.error);
+
+const input =
+  "mt-1 block w-full rounded-md border border-stone-300 bg-white px-3 py-2 focus:border-stone-900 focus:outline-2 focus:outline-stone-900";
+---
+
+<Layout
+  title="Contact"
+  description="Send Example Co a message about your project."
+>
+  <h1 class="text-3xl font-semibold tracking-tight">Contact</h1>
+
+  {sent ? (
+    <p role="status" class="mt-6 rounded-md bg-green-50 p-4 text-green-900">
+      Thanks, your message is on its way. We'll reply within two working days.
+    </p>
+  ) : (
+    <>
+      <p class="mt-4 text-stone-700">
+        Tell us about your project and we'll get back to you.
+      </p>
+      {sendFailed && (
+        <p role="alert" class="mt-6 rounded-md bg-red-50 p-4 text-red-900">
+          Sorry, your message couldn't be sent. Please email
+          <a href={`mailto:${CONTACT_EMAIL}`} class="underline">
+            {CONTACT_EMAIL}
+          </a>
+          instead.
+        </p>
+      )}
+      <form method="POST" action={actions.contact} class="mt-8 grid gap-5">
+        <div>
+          <label for="name" class="font-medium">
+            Name
+          </label>
+          <input
+            id="name"
+            name="name"
+            required
+            maxlength="100"
+            autocomplete="name"
+            class={input}
+            aria-describedby={fieldErrors.name ? "name-error" : undefined}
+          />
+          {fieldErrors.name && (
+            <p id="name-error" class="mt-1 text-sm text-red-700">
+              {fieldErrors.name.join(" ")}
+            </p>
+          )}
+        </div>
+        <div>
+          <label for="email" class="font-medium">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            autocomplete="email"
+            class={input}
+            aria-describedby={fieldErrors.email ? "email-error" : undefined}
+          />
+          {fieldErrors.email && (
+            <p id="email-error" class="mt-1 text-sm text-red-700">
+              {fieldErrors.email.join(" ")}
+            </p>
+          )}
+        </div>
+        <div>
+          <label for="message" class="font-medium">
+            Message
+          </label>
+          <textarea
+            id="message"
+            name="message"
+            required
+            minlength="10"
+            maxlength="5000"
+            rows="6"
+            class={input}
+            aria-describedby={fieldErrors.message ? "message-error" : undefined}
+          />
+          {fieldErrors.message && (
+            <p id="message-error" class="mt-1 text-sm text-red-700">
+              {fieldErrors.message.join(" ")}
+            </p>
+          )}
+        </div>
+        <div class="hidden" aria-hidden="true">
+          <label for="company">Company</label>
+          <input id="company" name="company" tabindex="-1" autocomplete="off" />
+        </div>
+        <button
+          type="submit"
+          class="justify-self-start rounded-md bg-stone-900 px-5 py-3 font-medium text-white hover:bg-stone-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900"
+        >
+          Send message
+        </button>
+      </form>
+    </>
+  )}
+</Layout>

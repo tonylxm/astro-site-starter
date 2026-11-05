@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Placeholders so the fail-fast env check passes; nothing is sent in CI.
+    env:
+      RESEND_API_KEY: re_ci_placeholder
+      CONTACT_TO_EMAIL: owner@example.com
+      CONTACT_FROM_EMAIL: Website <onboarding@resend.dev>
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # reads "packageManager" from package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test
+      - run: pnpm build
+
+  # Private repos on personal accounts: GitHub secret scanning is a paid add-on, so scan with gitleaks.
+  # Public repos with GitHub secret scanning on can delete this job.
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v3 # orgs also need env GITLEAKS_LICENSE
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
