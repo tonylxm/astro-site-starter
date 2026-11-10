@@ -10,7 +10,11 @@ export default defineConfig({
   trailingSlash: "never",
   build: { format: "file" },
   // Optimize images at build time instead of paying for a Cloudflare Images binding at runtime.
-  adapter: cloudflare({ imageService: "compile" }),
+  adapter: cloudflare({
+    imageService: "compile",
+    // Prerender in Node so the build sees process.env (CI placeholders, Workers Builds variables).
+    prerenderEnvironment: "node",
+  }),
   // The adapter would otherwise provision a KV namespace for sessions this site never uses.
   session: false,
   integrations: [sitemap()],
