@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The Astro adapter fills in main, assets and the compatibility date at build time.
+  "name": "astro-site-starter",
+  "compatibility_date": "2026-11-04",
+  "observability": { "enabled": true },
+}

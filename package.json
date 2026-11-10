@@ -15,11 +15,13 @@
     "format:check": "prettier --check .",
     "typecheck": "astro check",
     "test": "playwright test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "preview": "astro build && wrangler dev",
+    "deploy": "SITE_ENV=production astro build && wrangler deploy"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "14.4.6",
     "@astrojs/sitemap": "^3.7.4",
-    "@astrojs/vercel": "^11.0.18",
     "@tailwindcss/vite": "^4.3.4",
     "astro": "^7.4.5",
     "resend": "^6.37.0",
@@ -39,7 +41,8 @@
     "prettier-plugin-astro": "^1.1.2",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.1"
+    "typescript-eslint": "^8.72.1",
+    "wrangler": "4.158.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,astro}": [

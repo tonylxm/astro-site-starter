@@ -9,7 +9,7 @@ export default defineConfig(
   globalIgnores([
     "dist/",
     ".astro/",
-    ".vercel/",
+    ".wrangler/",
     "playwright-report/",
     "test-results/",
   ]),

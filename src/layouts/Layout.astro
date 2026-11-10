@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-import { VERCEL_ENV } from "astro:env/server";
+import { SITE_ENV } from "astro:env/server";
 import { DEFAULT_TITLE, SITE_DESCRIPTION, SITE_NAME } from "../consts";
 
 interface Props {
@@ -14,7 +14,7 @@ const { title, description = SITE_DESCRIPTION, noindex = false } = Astro.props;
 const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = new URL("/og.png", Astro.site);
-const indexable = VERCEL_ENV === "production" && !noindex;
+const indexable = SITE_ENV === "production" && !noindex;
 
 const organization = {
   "@context": "https://schema.org",

@@ -22,10 +22,13 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
-.vercel
 .env.*
 !.env.example
 
 # playwright
 playwright-report/
 test-results/
+
+# cloudflare
+.wrangler
+.dev.vars*

@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig, envField } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
-import vercel from "@astrojs/vercel";
+import cloudflare from "@astrojs/cloudflare";
 import sitemap from "@astrojs/sitemap";
 
 export default defineConfig({
@@ -9,7 +9,10 @@ export default defineConfig({
   site: "https://example.com",
   trailingSlash: "never",
   build: { format: "file" },
-  adapter: vercel(),
+  // Optimize images at build time instead of paying for a Cloudflare Images binding at runtime.
+  adapter: cloudflare({ imageService: "compile" }),
+  // The adapter would otherwise provision a KV namespace for sessions this site never uses.
+  session: false,
   integrations: [sitemap()],
   vite: { plugins: [tailwindcss()] },
   env: {
@@ -23,8 +26,8 @@ export default defineConfig({
         context: "server",
         access: "secret",
       }),
-      // Set by Vercel. Anything other than "production" is noindex.
-      VERCEL_ENV: envField.enum({
+      // Read at build time. Only the production deploy script sets "production"; anything else is noindex.
+      SITE_ENV: envField.enum({
         context: "server",
         access: "public",
         values: ["production", "preview", "development"],
