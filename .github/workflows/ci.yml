@@ -33,6 +33,37 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  # Production deploy, only after green CI on main. Turn off Workers Builds' production deploy on push.
+  # Secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID. Variable: PRODUCTION_URL (e.g. https://example.com).
+  # To release on a chosen date instead: replace the `if:` with `if: github.event_name == 'workflow_dispatch'` and add `workflow_dispatch:` under `on:`.
+  deploy:
+    needs: [ci]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The build validates the email secrets but never inlines them; the Worker reads the real ones (wrangler secret put) at runtime.
+      - run: pnpm run deploy
+        env:
+          RESEND_API_KEY: re_ci_placeholder
+          CONTACT_TO_EMAIL: owner@example.com
+          CONTACT_FROM_EMAIL: Website <onboarding@resend.dev>
+      - name: Smoke check
+        run: curl -fsS --retry 5 --retry-delay 5 --retry-all-errors -o /dev/null "${{ vars.PRODUCTION_URL }}"
+
   # Private repos on personal accounts: GitHub secret scanning is a paid add-on, so scan with gitleaks.
   # Public repos with GitHub secret scanning on can delete this job.
   secrets:

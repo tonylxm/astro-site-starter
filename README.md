@@ -16,8 +16,18 @@ Then:
 4. `pnpm dev` and open http://localhost:4321.
 5. Resend, in the client's account: add and verify their sending domain (SPF and DKIM records in their DNS), create an API key, and set `CONTACT_FROM_EMAIL` to an address on that domain. Until then `onboarding@resend.dev` only delivers to the Resend account's own email.
 6. In the GitHub repo settings, turn on secret scanning and push protection if the plan has them (templates don't copy settings). Otherwise the `secrets` CI job and the pre-commit hook run gitleaks.
-7. Set `name` in `wrangler.jsonc`, then `pnpm exec wrangler login` and `pnpm run deploy`. Add the three email values once with `pnpm exec wrangler secret put <NAME>`. The build also validates them, so keep them in `.env` locally, or in the build variables if you connect the repo in the Cloudflare dashboard (Workers Builds, deploy command `pnpm run deploy`). Only `pnpm run deploy` sets `SITE_ENV=production`, so preview builds stay `noindex`. Roll back with `pnpm exec wrangler rollback`.
-8. Before launch, run the seo skill's pre-launch check.
+7. Set `name` in `wrangler.jsonc`, then `pnpm exec wrangler login` and `pnpm run deploy`. Add the three email values once with `pnpm exec wrangler secret put <NAME>`. The build also validates them, so keep them in `.env` locally. Only `pnpm run deploy` sets `SITE_ENV=production`, so preview builds stay `noindex`. Roll back with `pnpm exec wrangler rollback`.
+8. Production deploys from CI: the `deploy` job in `.github/workflows/ci.yml` runs `pnpm run deploy` on push to `main` once the `ci` job is green, then curls the live site. In the GitHub repo settings (Secrets and variables → Actions) add:
+
+   | Name                    | Kind     | Value                                                            |
+   | ----------------------- | -------- | ---------------------------------------------------------------- |
+   | `CLOUDFLARE_API_TOKEN`  | Secret   | API token with the "Edit Cloudflare Workers" template            |
+   | `CLOUDFLARE_ACCOUNT_ID` | Secret   | Account ID from the Cloudflare dashboard                         |
+   | `PRODUCTION_URL`        | Variable | The live URL the smoke check fetches, e.g. `https://example.com` |
+
+   The job builds with placeholder email values (the Worker reads the real secrets at runtime). If the repo is connected to Workers Builds, turn off its production deploy on push (keep it for branch previews only), or `main` deploys twice and skips the CI gate.
+
+9. Before launch, run the seo skill's pre-launch check.
 
 **Team mode** (branch + PR, CI blocks merge): remove the hook with `pnpm remove husky lint-staged && rm -rf .husky`, delete the `prepare` and `lint-staged` entries from `package.json`, and protect `main` so it requires the CI check.
 
