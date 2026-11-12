@@ -1,0 +1,21 @@
+---
+interface Props {
+  items: { question: string; answer: string }[];
+}
+
+const { items } = Astro.props;
+---
+
+<section aria-labelledby="faq-heading" class="mt-12">
+  <h2 id="faq-heading" class="text-2xl font-semibold tracking-tight">
+    Common questions
+  </h2>
+  <div class="mt-4 divide-y divide-stone-200 border-y border-stone-200">
+    {items.map(({ question, answer }) => (
+      <details class="py-4">
+        <summary class="cursor-pointer font-medium">{question}</summary>
+        <p class="mt-2 text-stone-700">{answer}</p>
+      </details>
+    ))}
+  </div>
+</section>

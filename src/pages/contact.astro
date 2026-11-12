@@ -1,7 +1,7 @@
 ---
 import { actions, isInputError } from "astro:actions";
 import Layout from "../layouts/Layout.astro";
-import { CONTACT_EMAIL } from "../consts";
+import { business } from "../business";
 
 // The only on-demand route: form actions need the page rendered per request.
 export const prerender = false;
@@ -20,7 +20,7 @@ const input =
 
 <Layout
   title="Contact"
-  description="Send Example Co a message about your project."
+  description={`Send ${business.name} a message about your project.`}
 >
   <h1 class="text-3xl font-semibold tracking-tight">Contact</h1>
 
@@ -36,8 +36,8 @@ const input =
       {sendFailed && (
         <p role="alert" class="mt-6 rounded-md bg-red-50 p-4 text-red-900">
           Sorry, your message couldn't be sent. Please email
-          <a href={`mailto:${CONTACT_EMAIL}`} class="underline">
-            {CONTACT_EMAIL}
+          <a href={`mailto:${business.email}`} class="underline">
+            {business.email}
           </a>
           instead.
         </p>

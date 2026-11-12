@@ -13,7 +13,7 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 800 });
 });
 
-for (const path of ["/", "/contact"]) {
+for (const path of ["/", "/contact", "/services", "/services/website-build"]) {
   test(`${path} renders at phone width without horizontal scroll`, async ({
     page,
   }) => {

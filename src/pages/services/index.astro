@@ -1,0 +1,32 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+import { business } from "../../business";
+
+const services = (await getCollection("services")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<Layout
+  title="Services"
+  description={`Services from ${business.name}: ${services.map((s) => s.data.title).join(", ")}.`}
+>
+  <h1 class="text-3xl font-semibold tracking-tight">Services</h1>
+  <ul class="mt-8 grid gap-6">
+    {services.map(({ id, data }) => (
+      <li>
+        <h2 class="text-xl font-semibold">
+          <a
+            href={`/services/${id}`}
+            class="underline-offset-4 hover:underline"
+          >
+            {data.title}
+          </a>
+        </h2>
+        <p class="mt-1 text-stone-700">{data.description}</p>
+        {data.price && <p class="mt-1 text-sm text-stone-600">{data.price}</p>}
+      </li>
+    ))}
+  </ul>
+</Layout>

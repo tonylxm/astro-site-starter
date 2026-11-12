@@ -1,7 +1,10 @@
 ---
 import "../styles/global.css";
 import { SITE_ENV } from "astro:env/server";
-import { DEFAULT_TITLE, SITE_DESCRIPTION, SITE_NAME } from "../consts";
+import { business } from "../business";
+import Footer from "../components/Footer.astro";
+import JsonLd from "../components/JsonLd.astro";
+import { businessJsonLd } from "../lib/json-ld";
 
 interface Props {
   /** Page name. Omit on the home page to use the default title. */
@@ -10,22 +13,23 @@ interface Props {
   noindex?: boolean;
 }
 
-const { title, description = SITE_DESCRIPTION, noindex = false } = Astro.props;
-const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
-const canonical = new URL(Astro.url.pathname, Astro.site);
+const {
+  title,
+  description = business.description,
+  noindex = false,
+} = Astro.props;
+const fullTitle = title ? `${title} | ${business.name}` : business.defaultTitle;
+// build.format "file" puts ".html" in prerendered pathnames; canonicals must match the sitemap's clean URLs.
+const canonical = new URL(
+  Astro.url.pathname.replace(/(\/index)?\.html$/, ""),
+  Astro.site,
+);
 const ogImage = new URL("/og.png", Astro.site);
 const indexable = SITE_ENV === "production" && !noindex;
 
-const organization = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: SITE_NAME,
-  url: Astro.site?.href,
-  logo: new URL("/favicon.svg", Astro.site).href,
-};
-
 const nav = [
   { href: "/", label: "Home" },
+  { href: "/services", label: "Services" },
   { href: "/contact", label: "Contact" },
 ];
 ---
@@ -43,7 +47,7 @@ const nav = [
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:site_name" content={business.name} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
@@ -55,17 +59,13 @@ const nav = [
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
 
-    <script
-      type="application/ld+json"
-      is:inline
-      set:html={JSON.stringify(organization)}
-    />
+    <JsonLd data={businessJsonLd(Astro.site!)} />
   </head>
   <body class="flex min-h-dvh flex-col bg-stone-50 text-stone-900 antialiased">
     <header class="border-b border-stone-200">
       <div class="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
         <a href="/" class="font-semibold tracking-tight">
-          {SITE_NAME}
+          {business.name}
         </a>
         <nav aria-label="Main">
           <ul class="flex gap-4 text-sm">
@@ -89,10 +89,6 @@ const nav = [
     <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
       <slot />
     </main>
-    <footer class="border-t border-stone-200 text-sm text-stone-600">
-      <div class="mx-auto max-w-3xl px-4 py-6">
-        {`© ${new Date().getFullYear()} ${SITE_NAME}`}
-      </div>
-    </footer>
+    <Footer />
   </body>
 </html>

@@ -10,7 +10,7 @@ gh repo create <app> --template tonylxm/astro-site-starter --private --clone
 
 Then:
 
-1. Rename: set `name` in `package.json`, `site` in `astro.config.mjs` (the production domain), the business details in `src/consts.ts`, replace `public/og.png` (1200×630 share image) and the favicons, and replace this README.
+1. Rename: set `name` in `package.json`, `site` in `astro.config.mjs` (the production domain), the business details in `src/business.ts` (see [SEO and AI search](#seo-and-ai-search)), the example service in `src/content/services/`, replace `public/og.png` (1200×630 share image) and the favicons, and replace this README.
 2. `pnpm install` (also installs the Husky hook; it needs `brew install gitleaks`).
 3. Copy `.env.example` to `.env` and set the values. Dev and build stop with a clear error if one is missing.
 4. `pnpm dev` and open http://localhost:4321.
@@ -45,9 +45,59 @@ Then:
 - **Pages:** `/` and `/contact` share `src/layouts/Layout.astro`. Everything prerenders except `/contact`, which sets `export const prerender = false` because form actions need a per-request render.
 - **Contact form:** a plain HTML form posting to the `contact` action in `src/actions/index.ts` (no client JS). Zod validates the fields, a hidden `company` honeypot silently drops bots, and Resend sends the message with the visitor as `replyTo`. Success redirects to `/contact?sent=1` so a refresh doesn't resend.
 - **Env validation:** `env.schema` in `astro.config.mjs` with `validateSecrets: true`. Read values from `astro:env/server`, never `import.meta.env`, so they stay typed and server-only.
-- **SEO** (the seo skill's baseline): title and description per page, canonical, Open Graph and Twitter tags with a default share image, `Organization` JSON-LD (switch to the most specific `LocalBusiness` type for local clients), sitemap via `@astrojs/sitemap`, `robots.txt` from `src/pages/robots.txt.ts`, a real 404 page. Builds without `SITE_ENV=production` get `noindex` and `Disallow: /`. To check a local build as production, run `SITE_ENV=production pnpm build`.
+- **SEO and AI search**: see [below](#seo-and-ai-search).
 - **Cloudflare adapter:** prerendered pages are static assets (free, no Worker invocation), only `/contact` runs in the Worker. Sessions are off and images are optimized at build (`imageService: "compile"`), so no KV or Images binding is needed. Turn either on in `astro.config.mjs` only when the site uses it.
 - **Interactive widgets:** `pnpm astro add react` for a React island (calculator, booking widget), then render it with a `client:*` directive. If islands need shared state or cover most of the page, use the Next.js starter instead.
 - CI (`.github/workflows/ci.yml`) and Dependabot, copied from the project-starter skill. CI sets placeholder email env vars so the build's env check passes, and installs Chromium for the smoke test.
 - A pre-commit hook that runs gitleaks, then lint-staged (auto-fix only, no tests).
 - `AGENTS.md` is Astro's generated agent notes. project-starter's agents-md step fills in the rest.
+
+## SEO and AI search
+
+Google, Bing and AI search tools (ChatGPT search, Perplexity, AI Overviews) read the same signals: crawlable HTML, clear facts, consistent business details and structured data. So there's no separate "GEO" layer, just the seo skill's baseline done consistently.
+
+### Included
+
+| What                                                                                     | Where                                                                |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Title, description, canonical, Open Graph, Twitter card per page                         | `src/layouts/Layout.astro` (props `title`, `description`, `noindex`) |
+| Business JSON-LD (`Organization` or a `LocalBusiness` subtype), only fields that are set | `src/lib/json-ld.ts`, rendered by `src/components/JsonLd.astro`      |
+| Footer with name, address, phone, email and areas served                                 | `src/components/Footer.astro`                                        |
+| Service pages with optional price, areas and FAQs                                        | `src/content/services/*.md`, `src/pages/services/`                   |
+| Sitemap, `robots.txt`, `noindex` outside production, real 404                            | `@astrojs/sitemap`, `src/pages/robots.txt.ts`, `src/pages/404.astro` |
+| Static HTML, zero client JS by default, build-time image optimization                    | Astro defaults                                                       |
+
+Builds without `SITE_ENV=production` get `noindex` and `Disallow: /`. To check a local build as production, run `SITE_ENV=production pnpm build`.
+
+### Business details
+
+`src/business.ts` is the only place business facts live. Metadata, JSON-LD, header, footer and contact page read from it, so they can't drift apart. The production URL is `site` in `astro.config.mjs`.
+
+- `schemaType`: `"Organization"` for businesses without a public address, otherwise the most specific [LocalBusiness subtype](https://schema.org/LocalBusiness) (`Plumber`, `Dentist`, `HairSalon`).
+- Optional fields (`phone`, `address`, `areaServed`, `openingHours`, `sameAs`) stay unset until the client confirms them. Unknown facts go in `docs/client-questions.md`, never a guess.
+- Name, address and phone match the Google Business Profile character for character.
+
+### Add a service page
+
+1. Add `src/content/services/<slug>.md` (the file name is the URL). Copy the frontmatter from `website-build.md`: `title`, a unique `description`, and optional `price`, `areas`, `faqs` and `order`.
+2. Write the body in the client's words: what's included, who it suits, process, timing, price. Use `##` headings.
+3. Only add FAQs customers actually ask, answered with the client's facts. Leave `faqs` out otherwise.
+4. Delete `website-build.md` once real services exist. The `/services` list and the sitemap update themselves.
+
+### Add a location page
+
+Only when the client has something genuinely different to say about that place (a branch address, local projects, different services or prices). Make it a normal page in `src/pages/` with its own title, description and content. Otherwise list the place in `areaServed`: near-identical per-suburb pages are thin content and hurt more than they help.
+
+### Images
+
+Use `<Image>` from `astro:assets` with descriptive file names (`kitchen-renovation-remuera.jpg`, not `IMG_0042.jpg`). Informative images need `alt` describing what they show; decorative ones get `alt=""`.
+
+### What the client provides
+
+- Business name exactly as on their Google Business Profile, plus address and phone if local
+- Services, with prices or ranges if they publish them, and the areas they serve
+- The questions customers ask most, with their answers
+- Qualifications, experience and process worth stating
+- Logo, a 1200×630 share image, real photos
+- Links to their own profiles (Google Business Profile, Facebook, LinkedIn)
+- Access to Google Search Console and Business Profile at handover (the seo skill's handover steps)

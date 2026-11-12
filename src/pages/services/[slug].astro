@@ -1,0 +1,59 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import Faq from "../../components/Faq.astro";
+import Layout from "../../layouts/Layout.astro";
+import { business } from "../../business";
+
+export const getStaticPaths = (async () => {
+  const services = await getCollection("services");
+  return services.map((service) => ({
+    params: { slug: service.id },
+    props: { service },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  service: CollectionEntry<"services">;
+}
+
+const { service } = Astro.props;
+const { title, description, price, faqs } = service.data;
+const areas = service.data.areas ?? business.areaServed;
+const { Content } = await render(service);
+---
+
+<Layout title={title} description={description}>
+  <article>
+    <h1 class="text-3xl font-semibold tracking-tight">{title}</h1>
+    <p class="mt-4 text-lg text-stone-700">{description}</p>
+    {(price || (areas && areas.length > 0)) && (
+      <dl class="mt-6 grid gap-2 text-sm sm:grid-cols-[auto_1fr] sm:gap-x-6">
+        {price && (
+          <>
+            <dt class="font-medium">Price</dt>
+            <dd class="text-stone-700">{price}</dd>
+          </>
+        )}
+        {areas && areas.length > 0 && (
+          <>
+            <dt class="font-medium">Areas served</dt>
+            <dd class="text-stone-700">
+              {new Intl.ListFormat("en").format(areas)}
+            </dd>
+          </>
+        )}
+      </dl>
+    )}
+    <div class="mt-8 max-w-prose [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-semibold [&_p]:mt-4 [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-6">
+      <Content />
+    </div>
+    {faqs && faqs.length > 0 && <Faq items={faqs} />}
+    <a
+      href="/contact"
+      class="mt-12 inline-block rounded-md bg-stone-900 px-5 py-3 font-medium text-white hover:bg-stone-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-900"
+    >
+      Ask about {title.toLowerCase()}
+    </a>
+  </article>
+</Layout>
