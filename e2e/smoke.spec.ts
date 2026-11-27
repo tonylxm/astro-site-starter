@@ -38,3 +38,19 @@ test("contact form posts to the action and redirects to the thank-you state", as
   await expect(page).toHaveURL(/\/contact\?sent=1$/);
   await expect(page.getByRole("status")).toContainText("Thanks");
 });
+
+// Whitespace passes the browser's `required` check but fails the server's trimmed validation.
+test("contact form keeps what the visitor typed after a validation error", async ({
+  page,
+}) => {
+  await page.goto("/contact");
+  await page.getByLabel("Name").fill("   ");
+  await page.getByLabel("Email").fill("keep@example.com");
+  await page.getByLabel("Message").fill("Please keep this message text.");
+  await page.getByRole("button", { name: "Send message" }).click();
+  await expect(page.getByText("Enter your name.")).toBeVisible();
+  await expect(page.getByLabel("Email")).toHaveValue("keep@example.com");
+  await expect(page.getByLabel("Message")).toHaveValue(
+    "Please keep this message text.",
+  );
+});
