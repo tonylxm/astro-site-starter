@@ -36,5 +36,22 @@ test("contact form posts to the action and redirects to the thank-you state", as
     .evaluate((el: HTMLInputElement) => (el.value = "Spam Inc"));
   await page.getByRole("button", { name: "Send message" }).click();
   await expect(page).toHaveURL(/\/contact\?sent=1$/);
+  await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByRole("status")).toContainText("Thanks");
+});
+
+test("contact form shows a field error and no success state for a short message", async ({
+  page,
+}) => {
+  await page.goto("/contact");
+  await page.getByLabel("Name").fill("Test Person");
+  await page.getByLabel("Email").fill("person@example.com");
+  // Bypass the browser's minlength check so the server-side validation is what answers.
+  await page
+    .locator("form")
+    .evaluate((form: HTMLFormElement) => (form.noValidate = true));
+  await page.getByLabel("Message").fill("Too short");
+  await page.getByRole("button", { name: "Send message" }).click();
+  await expect(page.getByText("Write at least 10 characters.")).toBeVisible();
+  await expect(page.getByRole("status")).toHaveCount(0);
 });
