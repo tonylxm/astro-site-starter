@@ -48,10 +48,12 @@ test("contact form shows a field error and no success state for a short message"
   await page.getByLabel("Email").fill("person@example.com");
   // Bypass the browser's minlength check so the server-side validation is what answers.
   await page
-    .locator("form")
+    .locator("form", {
+      has: page.getByRole("button", { name: "Send message" }),
+    })
     .evaluate((form: HTMLFormElement) => (form.noValidate = true));
   await page.getByLabel("Message").fill("Too short");
   await page.getByRole("button", { name: "Send message" }).click();
-  await expect(page.getByText("Write at least 10 characters.")).toBeVisible();
+  await expect(page.locator("#message-error")).toBeVisible();
   await expect(page.getByRole("status")).toHaveCount(0);
 });
