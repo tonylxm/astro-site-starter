@@ -12,6 +12,7 @@ export default defineConfig(
     ".wrangler/",
     "playwright-report/",
     "test-results/",
+    ".claude/",
   ]),
   js.configs.recommended,
   tseslint.configs.recommended,
